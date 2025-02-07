@@ -187,6 +187,9 @@ if (empty($reshook)) {
 			setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentitiesnoconv('IdThirdParty')), null, 'errors');
 		} else {
 			if ($object->id > 0) {
+				$objectutil = dol_clone($object, 1); // We use a clone to avoid to denaturate loaded object when setting some properties for clone. We use native clone to keep this->db valid.
+				'@phan-var-force Propal $objectutil';
+
 				if (getDolGlobalString('PROPAL_CLONE_DATE_DELIVERY')) {
 					//Get difference between old and new delivery date and change lines according to difference
 					$date_delivery = dol_mktime(
@@ -204,31 +207,34 @@ if (empty($reshook)) {
 							12,
 							0,
 							0,
-							dol_print_date($date_delivery_old, '%m'),
-							dol_print_date($date_delivery_old, '%d'),
-							dol_print_date($date_delivery_old, '%Y')
+							(int) dol_print_date($date_delivery_old, '%m'),
+							(int) dol_print_date($date_delivery_old, '%d'),
+							(int) dol_print_date($date_delivery_old, '%Y')
 						);
 						//Calculate the difference and apply if necessary
 						$difference = $date_delivery - $old_date_delivery;
 						if ($difference != 0) {
-							$object->delivery_date = $date_delivery;
-							foreach ($object->lines as $line) {
+							$objectutil->delivery_date = $date_delivery;
+							foreach ($objectutil->lines as $line) {
 								if (isset($line->date_start)) {
-									$line->date_start = $line->date_start + $difference;
+									$line->date_start +=  $difference;
 								}
 								if (isset($line->date_end)) {
-									$line->date_end = $line->date_end + $difference;
+									$line->date_end += $difference;
 								}
 							}
 						}
 					}
 				}
 
-				$result = $object->createFromClone($user, $socid, (GETPOSTISSET('entity') ? GETPOSTINT('entity') : null), (GETPOST('update_prices') == 'on'), (GETPOST('update_desc') == 'on'));
+				$objectutil->socid = $socid;
+				$objectutil->entity = (GETPOSTISSET('entity') ? GETPOSTINT('entity') : $conf->entity);
+
+				$result = $objectutil->createFromClone($user, $socid, (GETPOSTISSET('entity') ? GETPOSTINT('entity') : null), (GETPOST('update_prices') == 'on'), (GETPOST('update_desc') == 'on'));
 				if ($result > 0) {
 					$warningMsgLineList = array();
 					// check all product lines are to sell otherwise add a warning message for each product line is not to sell
-					foreach ($object->lines as $line) {
+					foreach ($objectutil->lines as $line) {
 						if (!is_object($line->product)) {
 							$line->fetch_product();
 						}
@@ -245,8 +251,8 @@ if (empty($reshook)) {
 					header("Location: ".$_SERVER['PHP_SELF'].'?id='.$result);
 					exit();
 				} else {
-					if (count($object->errors) > 0) {
-						setEventMessages($object->error, $object->errors, 'errors');
+					if (count($objectutil->errors) > 0) {
+						setEventMessages($objectutil->error, $objectutil->errors, 'errors');
 					}
 					$action = '';
 				}
