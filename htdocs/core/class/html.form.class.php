@@ -4213,7 +4213,7 @@ class Form
 	public function load_cache_conditions_paiements()
 	{
 		// phpcs:enable
-		global $langs;
+		global $langs, $hookmanager;
 
 		$num = count($this->cache_conditions_paiements);
 		if ($num > 0) {
@@ -4222,7 +4222,9 @@ class Form
 
 		dol_syslog(__METHOD__, LOG_DEBUG);
 
-		$sql = "SELECT rowid, code, libelle as label, deposit_percent";
+		$this->cache_conditions_paiements = array();
+
+		$sql = "SELECT rowid, code, libelle as label, deposit_percent, entity";
 		$sql .= " FROM " . $this->db->prefix() . 'c_payment_term';
 		$sql .= " WHERE entity IN (" . getEntity('c_payment_term') . ")";
 		$sql .= " AND active > 0";
@@ -4237,10 +4239,21 @@ class Form
 
 				// Si traduction existe, on l'utilise, sinon on prend le libelle par default
 				$label = ($langs->trans("PaymentConditionShort" . $obj->code) != "PaymentConditionShort" . $obj->code ? $langs->trans("PaymentConditionShort" . $obj->code) : ($obj->label != '-' ? $obj->label : ''));
-				$this->cache_conditions_paiements[$obj->rowid]['code'] = $obj->code;
-				$this->cache_conditions_paiements[$obj->rowid]['label'] = $label;
-				$this->cache_conditions_paiements[$obj->rowid]['deposit_percent'] = $obj->deposit_percent;
+				$this->cache_conditions_paiements[$obj->rowid]['code'] = (string) $obj->code;
+				$this->cache_conditions_paiements[$obj->rowid]['label'] = (string) $label;
+				$this->cache_conditions_paiements[$obj->rowid]['deposit_percent'] = (string) $obj->deposit_percent;
+				$this->cache_conditions_paiements[$obj->rowid]['entity'] = (int) $obj->entity;
 				$i++;
+			}
+
+			$parameters = array('context' => 'paymentterm');
+			$reshook = $hookmanager->executeHooks('loadDictionaryCache', $parameters, $this); // Note that $action and $object may have been modified by hook
+			if (empty($reshook)) {
+				if (is_array($hookmanager->resArray) && count($hookmanager->resArray)) {
+					$this->cache_conditions_paiements = array_merge($this->cache_conditions_paiements, $hookmanager->resArray);
+				}
+			} else {
+				$this->cache_conditions_paiements = $hookmanager->resArray;
 			}
 
 			//$this->cache_conditions_paiements=dol_sort_array($this->cache_conditions_paiements, 'label', 'asc', 0, 0, 1);		// We use the field sortorder of table
@@ -4443,7 +4456,7 @@ class Form
 	public function load_cache_types_paiements()
 	{
 		// phpcs:enable
-		global $langs;
+		global $langs, $hookmanager;
 
 		$num = count($this->cache_types_paiements);        // TODO Use $conf->cache['payment_mode'] instead of $this->cache_types_paiements
 		if ($num > 0) {
@@ -4454,7 +4467,7 @@ class Form
 
 		$this->cache_types_paiements = array();
 
-		$sql = "SELECT id, code, libelle as label, type, active";
+		$sql = "SELECT id, code, libelle as label, type, entity, active";
 		$sql .= " FROM " . $this->db->prefix() . "c_paiement";
 		$sql .= " WHERE entity IN (" . getEntity('c_paiement') . ")";
 
@@ -4467,12 +4480,23 @@ class Form
 
 				// Si traduction existe, on l'utilise, sinon on prend le libelle par default
 				$label = ($langs->transnoentitiesnoconv("PaymentTypeShort" . $obj->code) != "PaymentTypeShort" . $obj->code ? $langs->transnoentitiesnoconv("PaymentTypeShort" . $obj->code) : ($obj->label != '-' ? $obj->label : ''));
-				$this->cache_types_paiements[$obj->id]['id'] = $obj->id;
-				$this->cache_types_paiements[$obj->id]['code'] = $obj->code;
-				$this->cache_types_paiements[$obj->id]['label'] = $label;
-				$this->cache_types_paiements[$obj->id]['type'] = $obj->type;
-				$this->cache_types_paiements[$obj->id]['active'] = $obj->active;
+				$this->cache_types_paiements[$obj->id]['id'] = (int) $obj->id;
+				$this->cache_types_paiements[$obj->id]['code'] = (string) $obj->code;
+				$this->cache_types_paiements[$obj->id]['label'] = (string) $label;
+				$this->cache_types_paiements[$obj->id]['type'] = (int) $obj->type;
+				$this->cache_types_paiements[$obj->id]['entity'] = (int) $obj->entity;
+				$this->cache_types_paiements[$obj->id]['active'] = (int) $obj->active;
 				$i++;
+			}
+
+			$parameters = array('context' => 'paymenttype');
+			$reshook = $hookmanager->executeHooks('loadDictionaryCache', $parameters, $this); // Note that $action and $object may have been modified by hook
+			if (empty($reshook)) {
+				if (is_array($hookmanager->resArray) && count($hookmanager->resArray)) {
+					$this->cache_types_paiements = array_merge($this->cache_types_paiements, $hookmanager->resArray);
+				}
+			} else {
+				$this->cache_types_paiements = $hookmanager->resArray;
 			}
 
 			$this->cache_types_paiements = dol_sort_array($this->cache_types_paiements, 'label', 'asc', 0, 0, 1);
