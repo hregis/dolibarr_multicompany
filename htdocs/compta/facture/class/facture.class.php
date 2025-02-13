@@ -2500,6 +2500,9 @@ class Facture extends CommonInvoice
 		if (isset($this->retained_warranty)) {
 			$this->retained_warranty = (float) $this->retained_warranty;
 		}
+		if (!isset($this->fk_user_author) && isset($this->user_author) ) {
+			$this->fk_user_author = $this->user_author;
+		}
 
 
 		// Check parameters
@@ -2528,6 +2531,7 @@ class Facture extends CommonInvoice
 		$sql .= " total_ttc=".(isset($this->total_ttc) ? (float) $this->total_ttc : "null").",";
 		$sql .= " revenuestamp=".((isset($this->revenuestamp) && $this->revenuestamp != '') ? (float) $this->revenuestamp : "null").",";
 		$sql .= " fk_statut=".(isset($this->status) ? (int) $this->status : "null").",";
+		$sql .= " fk_user_author=".(isset($this->fk_user_author) ? ((int) $this->fk_user_author) : "null").",";
 		$sql .= " fk_user_valid=".(isset($this->fk_user_valid) ? (int) $this->fk_user_valid : "null").",";
 		$sql .= " fk_facture_source=".(isset($this->fk_facture_source) ? (int) $this->fk_facture_source : "null").",";
 		$sql .= " fk_projet=".(isset($this->fk_project) ? (int) $this->fk_project : "null").",";

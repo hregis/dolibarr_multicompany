@@ -722,6 +722,7 @@ if (empty($reshook)) {
 					unset($_POST['date_end_fill']);
 					unset($_POST['situations']);
 					unset($_POST['progress']);
+					unset($_POST['fourn_ref']);
 				} else {
 					setEventMessages($object->error, $object->errors, 'errors');
 				}
@@ -864,6 +865,7 @@ if (empty($reshook)) {
 				unset($_POST['date_endyear']);
 				unset($_POST['situations']);
 				unset($_POST['progress']);
+				unset($_POST['fourn_ref']);
 			} else {
 				setEventMessages($object->error, $object->errors, 'errors');
 			}
